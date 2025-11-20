@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Tax Efficiency Calculator 2025/26</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .input-section, .results-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .slider-container {
+            margin-top: 10px;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .tax-relief-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tax-relief-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .tax-relief-item label {
+            flex: 1;
+            cursor: pointer;
+            margin: 0;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .tax-relief-item input[type="number"] {
+            width: 150px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .tax-relief-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        .relief-section {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .relief-section h4 {
+            color: #1565c0;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        
+        .result-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .result-card h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            color: #333;
+            font-size: 18px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+        }
+        
+        .result-label {
+            color: #666;
+        }
+        
+        .result-value {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .suggestions-section {
+            grid-column: 1 / -1;
+            background: #fff3cd;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #ffc107;
+        }
+        
+        .suggestion-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .suggestion-item h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .suggestion-item p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .saving-amount {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .deadline-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        
+        .deadline-info strong {
+            color: #1565c0;
+        }
+        
+        .total-deductions {
+            background: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .tax-relief-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .tax-relief-item input[type="number"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>UK Tax Efficiency Calculator 2025/26</h1>
+            <p id="headerYearEnd">Year End: 31 January 2026 | Optimise your salary & dividend strategy</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">Company Information</h2>
+                
+                <div class="info-box">
+                    Tax rates for 2025/26: Corporation Tax 19-25% | Personal Allowance £12,570 | Dividend Allowance £500 | Employer NI 15% (threshold £5,000)
+                </div>
+                
+                <div class="input-group">
+                    <label for="yearEnd">Accounting Year End Date</label>
+                    <input type="date" id="yearEnd" value="2026-01-31" onchange="calc()">
+                    <div id="deadlineInfo" class="deadline-info" style="margin-top: 10px;">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="turnover">Annual Turnover (£)</label>
+                    <input type="number" id="turnover" value="140000" min="0" step="1000" onchange="calc()">
+                </div>
+                
+                <div class="input-group">
+                    <label for="expenses">Business Expenses (£)</label>
+                    <input type="number" id="expenses" value="20000" min="0" step="1000" onchange="calc()">
+                </div>
+                
+                <div class="input-group">
+                    <label for="salary">Director's Salary (£): <strong id="salaryDisplay">12570</strong></label>
+                    <div class="slider-container">
+                        <input type="range" id="salary" class="slider" min="0" max="60000" value="12570" step="570" oninput="updateSalaryDisplay(); calc();">
+                    </div>
+                    <small style="color: #666;">Suggested: £12,570 (Personal Allowance - no income tax)</small>
+                </div>
+                
+                <div class="relief-section">
+                    <h4>💰 Tax-Deductible Expenses & Reliefs</h4>
+                    <small style="color: #666;">Select applicable reliefs and enter amounts</small>
+                    
+                    <div style="margin-top: 15px;">
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_pension" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_pension">Employer Pension Contributions</label>
+                                <span class="tax-relief-info">Tax-deductible, no NI, up to £60k annual allowance</span>
+                            </div>
+                            <input type="number" id="pension" value="0" min="0" step="1000" onchange="updateCheckbox('relief_pension'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_capital" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_capital">Capital Allowances (AIA)</label>
+                                <span class="tax-relief-info">100% deduction on plant & machinery, up to £1m</span>
+                            </div>
+                            <input type="number" id="capitalAllowances" value="0" min="0" step="1000" onchange="updateCheckbox('relief_capital'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_ev" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_ev">Electric Vehicle Purchase</label>
+                                <span class="tax-relief-info">100% first-year allowance, 2% BIK tax</span>
+                            </div>
+                            <input type="number" id="evPurchase" value="0" min="0" step="1000" onchange="updateCheckbox('relief_ev'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_rd" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_rd">R&D Tax Relief (SME)</label>
+                                <span class="tax-relief-info">Enhanced deduction on qualifying R&D expenditure</span>
+                            </div>
+                            <input type="number" id="rdExpenditure" value="0" min="0" step="1000" onchange="updateCheckbox('relief_rd'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_training" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_training">Staff Training Costs</label>
+                                <span class="tax-relief-info">100% deductible for work-related training</span>
+                            </div>
+                            <input type="number" id="trainingCosts" value="0" min="0" step="1000" onchange="updateCheckbox('relief_training'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_software" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_software">Software & IT Equipment</label>
+                                <span class="tax-relief-info">Qualifying under AIA or 100% FYA</span>
+                            </div>
+                            <input type="number" id="softwareCosts" value="0" min="0" step="1000" onchange="updateCheckbox('relief_software'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_property" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_property">Property Improvements</label>
+                                <span class="tax-relief-info">Structures & Buildings Allowance (3% per year)</span>
+                            </div>
+                            <input type="number" id="propertyImprovements" value="0" min="0" step="1000" onchange="updateCheckbox('relief_property'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_marketing" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_marketing">Marketing & Advertising</label>
+                                <span class="tax-relief-info">100% deductible business expense</span>
+                            </div>
+                            <input type="number" id="marketingCosts" value="0" min="0" step="1000" onchange="updateCheckbox('relief_marketing'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_professional" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_professional">Professional Fees</label>
+                                <span class="tax-relief-info">Accountancy, legal, consultancy fees</span>
+                            </div>
+                            <input type="number" id="professionalFees" value="0" min="0" step="1000" onchange="updateCheckbox('relief_professional'); calc();">
+                        </div>
+                        
+                        <div class="tax-relief-item">
+                            <input type="checkbox" id="relief_other" onchange="calc()">
+                            <div style="flex: 1;">
+                                <label for="relief_other">Other Tax Deductible</label>
+                                <span class="tax-relief-info">Other qualifying business expenses</span>
+                            </div>
+                            <input type="number" id="otherDeductions" value="0" min="0" step="1000" onchange="updateCheckbox('relief_other'); calc();">
+                        </div>
+                    </div>
+                    
+                    <div class="total-deductions" id="totalDeductions">
+                        Total Tax Deductions: £0
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h2 class="section-title">Tax Calculation Summary</h2>
+                
+                <div class="result-card">
+                    <h3>Corporation Tax</h3>
+                    <div class="result-item">
+                        <span class="result-label">Gross Profit</span>
+                        <span class="result-value" id="grossProfit">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Less: Salary</span>
+                        <span class="result-value" id="salaryDeduction">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Less: Employer NI</span>
+                        <span class="result-value" id="employerNI">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Less: Tax Reliefs</span>
+                        <span class="result-value" id="totalReliefsDisplay">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Taxable Profit</span>
+                        <span class="result-value" id="taxableProfit">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Corporation Tax Rate</span>
+                        <span class="result-value" id="ctRate">0%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Corporation Tax Due</span>
+                        <span class="result-value" id="corpTax">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label" style="color: #28a745;">💰 Tax Saved</span>
+                        <span class="result-value" style="color: #28a745;" id="taxSaved">£0</span>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <h3>Personal Tax (Director)</h3>
+                    <div class="result-item">
+                        <span class="result-label">Salary</span>
+                        <span class="result-value" id="salaryResult">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Available for Dividends</span>
+                        <span class="result-value" id="availableDividends">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Dividend Tax</span>
+                        <span class="result-value" id="divTax">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Income Tax on Salary</span>
+                        <span class="result-value" id="incomeTax">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">National Insurance</span>
+                        <span class="result-value" id="ni">£0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Net Take Home</span>
+                        <span class="result-value" id="netIncome">£0</span>
+                    </div>
+                </div>
+                
+                <div class="result-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h3 style="color: white;">Total Tax Liability</h3>
+                    <div class="result-item" style="border-color: rgba(255,255,255,0.3); color: white;">
+                        <span class="result-label" style="color: rgba(255,255,255,0.9);">Combined Tax</span>
+                        <span class="result-value" style="color: white;" id="totalTax">£0</span>
+                    </div>
+                    <div class="result-item" style="border-color: rgba(255,255,255,0.3); color: white;">
+                        <span class="result-label" style="color: rgba(255,255,255,0.9);">Effective Tax Rate</span>
+                        <span class="result-value" style="color: white;" id="effectiveRate">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="suggestions-section">
+                <h2 class="section-title" style="border-color: #ffc107;">💡 Additional Tax Efficiency Suggestions</h2>
+                <div id="suggestions"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        var TAX_RATES = {
+            personalAllowance: 12570,
+            basicRateLimit: 50270,
+            higherRateLimit: 125140,
+            basicIncomeTaxRate: 0.20,
+            higherIncomeTaxRate: 0.40,
+            additionalIncomeTaxRate: 0.45,
+            niThreshold: 12570,
+            niRate: 0.08,
+            employerNiThreshold: 5000,
+            employerNiRate: 0.15,
+            dividendAllowance: 500,
+            basicDividendRate: 0.0875,
+            higherDividendRate: 0.3375,
+            additionalDividendRate: 0.3935,
+            smallProfitsRate: 0.19,
+            mainRate: 0.25,
+            smallProfitsThreshold: 50000,
+            upperProfitsThreshold: 250000
+        };
+        
+        function formatCurrency(amount) {
+            return '£' + Math.round(amount).toLocaleString();
+        }
+        
+        function formatDate(date) {
+            var options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('en-GB', options);
+        }
+        
+        function addMonths(date, months) {
+            var result = new Date(date);
+            result.setMonth(result.getMonth() + months);
+            return result;
+        }
+        
+        function addDays(date, days) {
+            var result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+        
+        function updateCheckbox(checkboxId) {
+            var checkbox = document.getElementById(checkboxId);
+            var inputId = checkboxId.replace('relief_', '');
+            
+            var inputIds = {
+                'relief_pension': 'pension',
+                'relief_capital': 'capitalAllowances',
+                'relief_ev': 'evPurchase',
+                'relief_rd': 'rdExpenditure',
+                'relief_training': 'trainingCosts',
+                'relief_software': 'softwareCosts',
+                'relief_property': 'propertyImprovements',
+                'relief_marketing': 'marketingCosts',
+                'relief_professional': 'professionalFees',
+                'relief_other': 'otherDeductions'
+            };
+            
+            var input = document.getElementById(inputIds[checkboxId]);
+            var value = parseFloat(input.value) || 0;
+            
+            checkbox.checked = value > 0;
+        }
+        
+        function updateSalaryDisplay() {
+            var salary = document.getElementById('salary').value;
+            document.getElementById('salaryDisplay').textContent = formatCurrency(parseFloat(salary));
+        }
+        
+        function updateDeadlines() {
+            var yearEndInput = document.getElementById('yearEnd').value;
+            if (!yearEndInput) return;
+            
+            var yearEnd = new Date(yearEndInput);
+            var ctFilingDeadline = addMonths(yearEnd, 12);
+            var ctPaymentDeadline = addDays(addMonths(yearEnd, 9), 1);
+            var today = new Date();
+            var daysUntilPayment = Math.ceil((ctPaymentDeadline - today) / (1000 * 60 * 60 * 24));
+            
+            var urgencyMessage = '';
+            var urgencyStyle = 'background: #e3f2fd; color: #1565c0;';
+            
+            if (daysUntilPayment < 0) {
+                urgencyStyle = 'background: #ffebee; color: #c62828;';
+                urgencyMessage = ' ⚠️ OVERDUE';
+            } else if (daysUntilPayment < 30) {
+                urgencyStyle = 'background: #fff3e0; color: #e65100;';
+                urgencyMessage = ' ⚠️ URGENT';
+            } else if (daysUntilPayment < 60) {
+                urgencyStyle = 'background: #fff9c4; color: #f57f17;';
+                urgencyMessage = ' ⏰ Soon';
+            }
+            
+            var deadlineHtml = '<strong>📅 Key Deadlines:</strong><br><div style="margin-top: 8px;">' +
+                '<strong>Corporation Tax Payment:</strong> ' + formatDate(ctPaymentDeadline) + ' ' +
+                (daysUntilPayment >= 0 ? '(' + daysUntilPayment + ' days)' : '(OVERDUE)') +
+                urgencyMessage + '<br>' +
+                '<strong>CT Return Filing:</strong> ' + formatDate(ctFilingDeadline) +
+                '</div>';
+            
+            document.getElementById('deadlineInfo').innerHTML = deadlineHtml;
+            document.getElementById('deadlineInfo').style = urgencyStyle + '; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 13px;';
+            document.getElementById('headerYearEnd').textContent = 'Year End: ' + formatDate(yearEnd) + ' | Optimise your salary & dividend strategy';
+        }
+        
+        function calculateCorporationTax(profit) {
+            if (profit <= TAX_RATES.smallProfitsThreshold) {
+                return {
+                    tax: profit * TAX_RATES.smallProfitsRate,
+                    rate: TAX_RATES.smallProfitsRate
+                };
+            } else if (profit >= TAX_RATES.upperProfitsThreshold) {
+                return {
+                    tax: profit * TAX_RATES.mainRate,
+                    rate: TAX_RATES.mainRate
+                };
+            } else {
+                var marginalRelief = ((TAX_RATES.upperProfitsThreshold - profit) / (TAX_RATES.upperProfitsThreshold - TAX_RATES.smallProfitsThreshold)) * 
+                                      (profit * (TAX_RATES.mainRate - TAX_RATES.smallProfitsRate));
+                var tax = (profit * TAX_RATES.mainRate) - (marginalRelief * 0.015);
+                return {
+                    tax: tax,
+                    rate: tax / profit
+                };
+            }
+        }
+        
+        function calculateIncomeTax(salary) {
+            if (salary <= TAX_RATES.personalAllowance) return 0;
+            
+            var tax = 0;
+            var taxableIncome = salary - TAX_RATES.personalAllowance;
+            
+            if (taxableIncome <= (TAX_RATES.basicRateLimit - TAX_RATES.personalAllowance)) {
+                tax = taxableIncome * TAX_RATES.basicIncomeTaxRate;
+            } else if (salary <= TAX_RATES.higherRateLimit) {
+                var basicRateTax = (TAX_RATES.basicRateLimit - TAX_RATES.personalAllowance) * TAX_RATES.basicIncomeTaxRate;
+                var higherRateTax = (salary - TAX_RATES.basicRateLimit) * TAX_RATES.higherIncomeTaxRate;
+                tax = basicRateTax + higherRateTax;
+            } else {
+                var basicRateTax = (TAX_RATES.basicRateLimit - TAX_RATES.personalAllowance) * TAX_RATES.basicIncomeTaxRate;
+                var higherRateTax = (TAX_RATES.higherRateLimit - TAX_RATES.basicRateLimit) * TAX_RATES.higherIncomeTaxRate;
+                var additionalRateTax = (salary - TAX_RATES.higherRateLimit) * TAX_RATES.additionalIncomeTaxRate;
+                tax = basicRateTax + higherRateTax + additionalRateTax;
+            }
+            
+            return tax;
+        }
+        
+        function calculateNI(salary) {
+            if (salary <= TAX_RATES.niThreshold) return 0;
+            return (salary - TAX_RATES.niThreshold) * TAX_RATES.niRate;
+        }
+        
+        function calculateEmployerNI(salary) {
+            if (salary <= TAX_RATES.employerNiThreshold) return 0;
+            return (salary - TAX_RATES.employerNiThreshold) * TAX_RATES.employerNiRate;
+        }
+        
+        function calculateDividendTax(dividends, salary) {
+            var taxableDividends = Math.max(0, dividends - TAX_RATES.dividendAllowance);
+            if (taxableDividends <= 0) return 0;
+            
+            var basicRateRemaining = Math.max(0, TAX_RATES.basicRateLimit - salary);
+            
+            if (basicRateRemaining >= taxableDividends) {
+                return taxableDividends * TAX_RATES.basicDividendRate;
+            } else if (salary >= TAX_RATES.higherRateLimit) {
+                return taxableDividends * TAX_RATES.additionalDividendRate;
+            } else {
+                var basicRateDividends = Math.min(taxableDividends, basicRateRemaining);
+                var remainingDividends = taxableDividends - basicRateDividends;
+                
+                var higherRateRemaining = Math.max(0, TAX_RATES.higherRateLimit - salary - basicRateDividends);
+                var higherRateDividends = Math.min(remainingDividends, higherRateRemaining);
+                var additionalRateDividends = Math.max(0, remainingDividends - higherRateDividends);
+                
+                return (basicRateDividends * TAX_RATES.basicDividendRate) +
+                       (higherRateDividends * TAX_RATES.higherDividendRate) +
+                       (additionalRateDividends * TAX_RATES.additionalDividendRate);
+            }
+        }
+        
+        function calculateRDRelief(rdSpend) {
+            return rdSpend * 0.86;
+        }
+        
+        function generateSuggestions(data) {
+            var suggestions = [];
+            var yearEnd = data.yearEnd;
+            var today = new Date();
+            var daysUntilYearEnd = Math.ceil((yearEnd - today) / (1000 * 60 * 60 * 24));
+            
+            if (data.pension < 5000 && data.grossProfit > 30000) {
+                var recommendedPension = Math.min(40000, data.grossProfit * 0.15);
+                suggestions.push({
+                    title: '💼 Not Using Pension Relief',
+                    description: 'You could save up to ' + formatCurrency(recommendedPension * 0.25) + ' in corporation tax by making employer pension contributions of ' + formatCurrency(recommendedPension) + '.',
+                    saving: recommendedPension * 0.25
+                });
+            }
+            
+            if (data.capitalAllowances === 0 && data.grossProfit > 40000) {
+                suggestions.push({
+                    title: '🏭 Capital Allowances Not Claimed',
+                    description: 'If you\'ve purchased equipment, machinery, or IT systems, claim the Annual Investment Allowance (up to £1m) for 100% first-year deduction.',
+                    saving: 5000
+                });
+            }
+            
+            if (data.evPurchase === 0 && data.grossProfit > 50000) {
+                suggestions.push({
+                    title: '🚗 Electric Vehicle Benefits',
+                    description: 'Consider an electric company vehicle. A £40,000 EV gives £10,000 corporation tax relief plus only 2% benefit-in-kind tax (£80/year tax for director).',
+                    saving: 10000
+                });
+            }
+            
+            if (data.rdExpenditure === 0 && data.turnover < 500000) {
+                suggestions.push({
+                    title: '🔬 R&D Tax Credits Available',
+                    description: 'If your business involves innovation or product development, SME R&D relief gives 86p back for every £1 spent. Even software development may qualify.',
+                    saving: 8000
+                });
+            }
+            
+            if (data.grossProfit > 60000) {
+                suggestions.push({
+                    title: '👨‍👩‍👧 Employ Family Members',
+                    description: 'If you have a spouse or family members who assist the business, employ them at up to £12,570 each to use their personal allowances efficiently.',
+                    saving: 3000
+                });
+            }
+            
+            if (data.availableDividends > 50000) {
+                suggestions.push({
+                    title: '📊 Dividend Timing Strategy',
+                    description: 'Consider splitting large dividend payments across tax years to use multiple £500 allowances and potentially stay in lower tax brackets.',
+                    saving: 1000
+                });
+            }
+            
+            if (daysUntilYearEnd > 0 && daysUntilYearEnd < 60) {
+                suggestions.push({
+                    title: '⏰ Year End Planning (' + daysUntilYearEnd + ' days left)',
+                    description: 'Final chance to make tax-deductible expenditures before ' + formatDate(yearEnd) + '. Consider pension contributions, equipment purchases, or pre-paying expenses.',
+                    saving: 0
+                });
+            }
+            
+            return suggestions;
+        }
+        
+        function calc() {
+            var turnover = parseFloat(document.getElementById('turnover').value) || 0;
+            var expenses = parseFloat(document.getElementById('expenses').value) || 0;
+            var salary = parseFloat(document.getElementById('salary').value) || 0;
+            
+            var pension = parseFloat(document.getElementById('pension').value) || 0;
+            var capitalAllowances = parseFloat(document.getElementById('capitalAllowances').value) || 0;
+            var evPurchase = parseFloat(document.getElementById('evPurchase').value) || 0;
+            var rdExpenditure = parseFloat(document.getElementById('rdExpenditure').value) || 0;
+            var trainingCosts = parseFloat(document.getElementById('trainingCosts').value) || 0;
+            var softwareCosts = parseFloat(document.getElementById('softwareCosts').value) || 0;
+            var propertyImprovements = parseFloat(document.getElementById('propertyImprovements').value) || 0;
+            var marketingCosts = parseFloat(document.getElementById('marketingCosts').value) || 0;
+            var professionalFees = parseFloat(document.getElementById('professionalFees').value) || 0;
+            var otherDeductions = parseFloat(document.getElementById('otherDeductions').value) || 0;
+            
+            var rdEnhancement = calculateRDRelief(rdExpenditure);
+            var propertyAllowance = propertyImprovements * 0.03;
+            
+            var totalReliefs = pension + capitalAllowances + evPurchase + rdExpenditure + rdEnhancement + 
+                              trainingCosts + softwareCosts + propertyAllowance + marketingCosts + 
+                              professionalFees + otherDeductions;
+            
+            document.getElementById('totalDeductions').textContent = 'Total Tax Deductions: ' + formatCurrency(totalReliefs);
+            
+            updateCheckbox('relief_pension');
+            updateCheckbox('relief_capital');
+            updateCheckbox('relief_ev');
+            updateCheckbox('relief_rd');
+            updateCheckbox('relief_training');
+            updateCheckbox('relief_software');
+            updateCheckbox('relief_property');
+            updateCheckbox('relief_marketing');
+            updateCheckbox('relief_professional');
+            updateCheckbox('relief_other');
+            
+            var grossProfit = turnover - expenses;
+            var employerNI = calculateEmployerNI(salary);
+            var taxableProfit = grossProfit - salary - employerNI - totalReliefs;
+            
+            var taxableProfitWithoutReliefs = grossProfit - salary - employerNI;
+            var ctWithoutReliefs = calculateCorporationTax(Math.max(0, taxableProfitWithoutReliefs));
+            
+            var ctResult = calculateCorporationTax(Math.max(0, taxableProfit));
+            var corpTax = ctResult.tax;
+            var taxSaved = ctWithoutReliefs.tax - corpTax;
+            
+            var profitAfterCT = taxableProfit - corpTax;
+            var availableDividends = Math.max(0, profitAfterCT);
+            
+            var incomeTax = calculateIncomeTax(salary);
+            var ni = calculateNI(salary);
+            var divTax = calculateDividendTax(availableDividends, salary);
+            
+            var netIncome = salary + availableDividends - incomeTax - ni - divTax;
+            var totalTax = corpTax + incomeTax + ni + divTax + employerNI;
+            var effectiveRate = grossProfit > 0 ? (totalTax / grossProfit) * 100 : 0;
+            
+            document.getElementById('salaryDisplay').textContent = formatCurrency(salary);
+            document.getElementById('grossProfit').textContent = formatCurrency(grossProfit);
+            document.getElementById('salaryDeduction').textContent = formatCurrency(salary);
+            document.getElementById('employerNI').textContent = formatCurrency(employerNI);
+            document.getElementById('totalReliefsDisplay').textContent = formatCurrency(totalReliefs);
+            document.getElementById('taxableProfit').textContent = formatCurrency(taxableProfit);
+            document.getElementById('ctRate').textContent = (ctResult.rate * 100).toFixed(1) + '%';
+            document.getElementById('corpTax').textContent = formatCurrency(corpTax);
+            document.getElementById('taxSaved').textContent = formatCurrency(taxSaved);
+            document.getElementById('salaryResult').textContent = formatCurrency(salary);
+            document.getElementById('availableDividends').textContent = formatCurrency(availableDividends);
+            document.getElementById('divTax').textContent = formatCurrency(divTax);
+            document.getElementById('incomeTax').textContent = formatCurrency(incomeTax);
+            document.getElementById('ni').textContent = formatCurrency(ni);
+            document.getElementById('netIncome').textContent = formatCurrency(netIncome);
+            document.getElementById('totalTax').textContent = formatCurrency(totalTax);
+            document.getElementById('effectiveRate').textContent = effectiveRate.toFixed(1) + '%';
+            
+            var yearEndInput = document.getElementById('yearEnd').value;
+            var yearEnd = new Date(yearEndInput);
+            
+            var suggestions = generateSuggestions({
+                turnover: turnover,
+                expenses: expenses,
+                salary: salary,
+                pension: pension,
+                capitalAllowances: capitalAllowances,
+                evPurchase: evPurchase,
+                rdExpenditure: rdExpenditure,
+                grossProfit: grossProfit,
+                taxableProfit: taxableProfit,
+                corpTax: corpTax,
+                availableDividends: availableDividends,
+                incomeTax: incomeTax,
+                ni: ni,
+                divTax: divTax,
+                netIncome: netIncome,
+                totalTax: totalTax,
+                employerNI: employerNI,
+                yearEnd: yearEnd
+            });
+            
+            var suggestionsHtml = '';
+            for (var i = 0; i < suggestions.length; i++) {
+                var s = suggestions[i];
+                suggestionsHtml += '<div class="suggestion-item">' +
+                    '<h4>' + s.title + '</h4>' +
+                    '<p>' + s.description + '</p>' +
+                    (s.saving > 0 ? '<span class="saving-amount">Potential saving: ' + formatCurrency(s.saving) + '</span>' : '') +
+                    '</div>';
+            }
+            
+            if (suggestions.length === 0) {
+                suggestionsHtml = '<div class="suggestion-item">' +
+                    '<h4>✅ Excellent Tax Planning!</h4>' +
+                    '<p>You\'re using most available tax reliefs. Continue to review annually and ensure all expenditure is properly documented.</p>' +
+                    '</div>';
+            }
+            
+            document.getElementById('suggestions').innerHTML = suggestionsHtml;
+        }
+        
+        updateDeadlines();
+        updateSalaryDisplay();
+        calc();
+    </script>
+</body>
+</html>
