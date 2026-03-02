@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Director Remuneration Calculator 2025-26 | MSA Accountants</title>
 <link href="https://fonts.googleapis.com/css2?family=Georgia:ital@0;1&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --green: #2d6a4f;
@@ -201,23 +202,58 @@
 
   .print-btn:hover { background: #9a6e22; transform: translateY(-1px); }
 
-  @media print {
-    header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .btn-group, .print-btn, .reset-btn, .calc-btn { display: none !important; }
-    .input-section { box-shadow: none; border: 1px solid #ccc; }
-    .results-section { display: block !important; }
-    .winner-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .scenario-card.best { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tbody tr.total-row, tbody tr.eff-row, tbody tr.takehome-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tbody tr.section-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .scenarios-grid { grid-template-columns: repeat(3, 1fr); }
-    footer { display: block; }
-    body { font-size: 11px; }
-    .container { padding: 10px; }
-    table { font-size: 10px; min-width: unset; }
-    .detail-section { overflow: visible; }
+  /* Summary banner */
+  .summary-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
   }
+
+  .summary-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .sum-item {
+    flex: 1;
+    min-width: 140px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+
+  .sum-item.highlight-green {
+    background: var(--green-pale);
+    border-color: var(--green);
+  }
+
+  .sum-item.highlight-gold {
+    background: #fff8e6;
+    border-color: var(--gold);
+  }
+
+  .sum-label {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-style: italic;
+    margin-bottom: 6px;
+  }
+
+  .sum-val {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .sum-item.highlight-green .sum-val { color: var(--green); }
+  .sum-item.highlight-gold .sum-val { color: var(--gold); }
 
   /* Results */
   .results-section {
@@ -515,7 +551,7 @@
 <header>
   <div class="badge">Tax Year 2025-26</div>
   <h1>Director Remuneration Tax Calculator</h1>
-  <p>Compare salary, dividends and mixed strategies — personal tax &amp; corporation tax combined</p>
+  <p>Enter your salary &amp; dividend figures to calculate the full tax position — personal tax &amp; corporation tax combined</p>
 </header>
 
 <div class="container">
@@ -583,8 +619,8 @@
     </div>
 
     <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid var(--green-pale);">
-      <span style="font-family:'Playfair Display',Georgia,serif; font-size:0.82rem; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:0.07em;">Step 3 — Custom Scenario (Optional)</span>
-      <p style="font-size:0.82rem; color:var(--text-light); margin-top:6px; font-style:italic;">Enter any salary &amp; dividend combination to see its tax impact alongside the standard scenarios.</p>
+      <span style="font-family:'Playfair Display',Georgia,serif; font-size:0.82rem; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:0.07em;">Step 3 — Salary &amp; Dividend Figures</span>
+      <p style="font-size:0.82rem; color:var(--text-light); margin-top:6px; font-style:italic;">Enter the salary and dividend figures to calculate the full combined tax position.</p>
       <div class="input-grid" style="margin-top:12px;">
         <div class="input-group">
           <label>Custom salary (£)</label>
@@ -604,51 +640,42 @@
     </div>
 
     <div class="btn-group">
-      <button class="calc-btn" onclick="calculate()">Calculate All Scenarios →</button>
+      <button class="calc-btn" onclick="calculate()">Calculate →</button>
       <button class="reset-btn" onclick="resetForm()">↺ Reset</button>
     </div>
   </div>
 
   <div class="results-section" id="results">
 
-    <div class="winner-banner" id="winnerBanner">
-      <div class="trophy">🏆</div>
-      <div>
-        <h3 id="winnerTitle">Best Strategy: —</h3>
-        <p id="winnerDesc"></p>
-      </div>
-    </div>
+    <!-- Summary banner -->
+    <div class="summary-section" id="summaryBanner"></div>
 
-    <div class="scenarios-grid" id="scenariosGrid"></div>
-
+    <!-- Detailed breakdown -->
     <div class="detail-section">
-      <h2>Detailed Comparison Table</h2>
+      <h2>Detailed Tax Breakdown</h2>
       <table id="detailTable"></table>
     </div>
 
     <div class="notes-box">
-      <h4>Assumptions &amp; Notes</h4>
+      <h4>Assumptions &amp; Notes — Tax Year 2025-26</h4>
       <ul>
-        <li>England, Wales &amp; Northern Ireland tax rates applied</li>
-        <li>Employer NIC secondary threshold: £5,000 (2025-26). Rate: 15%</li>
-        <li>Employee NIC: 8% between £12,570 – £50,270; 2% above £50,270</li>
-        <li>Dividend tax rates: 8.75% (basic), 33.75% (higher), 39.35% (additional)</li>
-        <li>Corporation tax: 19% (≤small profits threshold), 25% (≥£250k), marginal relief between</li>
-        <li>Marginal relief fraction: 3/200. Formula: 25% × profit − (3/200 × (UL − profit) × profit/augmented profits)</li>
-        <li>Dividends limited to post-CT retained profits in each scenario</li>
-        <li>Director is assumed to have no other income unless entered above</li>
-        <li>Personal Allowance tapering applied for total income over £100,000 (£1 reduction per £2 over £100k, fully withdrawn at £125,140)</li>
-        <li>⚠️ If salary + employer NIC exceeds company profit, the scenario is flagged as unaffordable</li>
-        <li>Rates announced to rise from 6 April 2026 — basic rate dividend tax increases to 10.75%</li>
+        <li>England, Wales &amp; Northern Ireland rates applied</li>
+        <li>Personal Allowance: £12,570 (frozen to Apr 2028). Tapers by £1 per £2 over £100,000; fully withdrawn at £125,140</li>
+        <li>Dividend Allowance: £500. Basic: 8.75% · Higher: 33.75% · Additional: 39.35%</li>
+        <li>Employer NIC: 15% above £5,000 secondary threshold (increased from 13.8% / £9,100 in 2024-25)</li>
+        <li>Employee NIC: 8% (£12,570–£50,270) · 2% above £50,270</li>
+        <li>Corporation Tax: 19% (≤£50k) · Marginal relief (£50k–£250k) · 25% (≥£250k). Fraction: 3/200</li>
+        <li>Dividends capped at post-CT retained profit. If salary + employer NIC exceeds profit, no dividends can be paid</li>
+        <li>⚠️ Dividend tax rates rise from 6 April 2026: basic 10.75%, higher 35.75%</li>
       </ul>
     </div>
 
     <div class="warning-box">
-      ⚠️ <strong>Professional advice note:</strong> This calculator provides illustrative figures only. Individual circumstances vary. Always confirm with your accountant before implementing a remuneration strategy. Rates correct for 2025-26 tax year.
+      ⚠️ <strong>Professional advice note:</strong> This calculator provides illustrative figures only. Individual circumstances vary. Always confirm with your accountant before implementing a remuneration strategy.
     </div>
 
-    <div style="text-align:center; margin-bottom: 8px;">
-      <button class="print-btn" onclick="printPDF()">🖨 Print / Save as PDF</button>
+    <div style="text-align:center; margin:20px 0 8px;">
+      <button class="print-btn" onclick="downloadPDF()">⬇ Download PDF</button>
     </div>
 
   </div>
@@ -801,96 +828,89 @@ function _calculate() {
   const empAllowance = parseFloat(document.getElementById('empAllowance').value) || 0;
   const otherIncome = parseFloat(document.getElementById('otherIncome').value) || 0;
 
-  const customSalaryVal = document.getElementById('customSalary').value;
-  const customDivVal = document.getElementById('customDiv').value;
-  const hasCustom = customSalaryVal !== '' || customDivVal !== '';
-
-  const baseScenarios = [
-    runScenario('Salary Only\n(£50,270)', 50270, 0, profit, associated, empAllowance, otherIncome),
-    runScenario('£12,570 Salary\n+ Dividends', 12570, profit, profit, associated, empAllowance, otherIncome),
-    runScenario('Dividends Only', 0, profit, profit, associated, empAllowance, otherIncome),
-  ];
-
-  const scenarios = [...baseScenarios];
-
-  if (hasCustom) {
-    const cSalary = parseFloat(customSalaryVal) || 0;
-    const cDiv = parseFloat(customDivVal) || profit;
-    const cLabel = `Custom\n(£${cSalary.toLocaleString('en-GB')} sal + £${cDiv.toLocaleString('en-GB')} div)`;
-    scenarios.push(runScenario(cLabel, cSalary, cDiv, profit, associated, empAllowance, otherIncome));
+  const cSalaryVal = document.getElementById('customSalary').value;
+  const cDivVal    = document.getElementById('customDiv').value;
+  if (cSalaryVal === '' && cDivVal === '') {
+    alert('Please enter a salary and/or dividend amount to calculate.');
+    return;
   }
+  const cSalary = parseFloat(cSalaryVal) || 0;
+  const cDiv    = parseFloat(cDivVal)    || 0;
 
-  // Find best (lowest total tax)
-  let bestIdx = 0;
-  scenarios.forEach((s, i) => { if (s.totalTax < scenarios[bestIdx].totalTax) bestIdx = i; });
+  const s = runScenario('Your Scenario', cSalary, cDiv, profit, associated, empAllowance, otherIncome);
 
-  const best = scenarios[bestIdx];
-  document.getElementById('winnerTitle').textContent = `Best Strategy: ${best.label.replace('\n', ' ')}`;
-  document.getElementById('winnerDesc').textContent =
-    `Total tax burden: ${fmt(best.totalTax)} (${pct(best.effRate)} effective rate) — Director takes home: ${fmt(best.takeHome)}`;
-
-  // Scenario cards
-  const grid = document.getElementById('scenariosGrid');
-  grid.innerHTML = scenarios.map((s, i) => `
-    <div class="scenario-card ${i === bestIdx ? 'best' : ''} ${s.salaryExceedsProfit ? 'exceeded' : ''}">
-      <h3>${s.label.replace('\n', '<br>')}</h3>
-      ${s.salaryExceedsProfit ? '<div class="exceed-warning">⚠️ Salary + Employer NIC exceeds company profit</div>' : ''}
-      <div class="card-row"><span class="label">Salary</span><span class="value">${fmt(s.salary)}</span></div>
-      <div class="card-row"><span class="label">Dividends</span><span class="value">${fmt(s.dividends)}</span></div>
-      <div class="card-row"><span class="label">Corporation Tax</span><span class="value">${fmt(s.ct)}</span></div>
-      <div class="card-row"><span class="label">Income Tax</span><span class="value">${fmt(s.itOnSalary)}</span></div>
-      <div class="card-row"><span class="label">Dividend Tax</span><span class="value">${fmt(s.divTax)}</span></div>
-      <div class="card-row"><span class="label">Employee NIC</span><span class="value">${fmt(s.eeNIC)}</span></div>
-      <div class="card-row"><span class="label">Employer NIC</span><span class="value">${fmt(s.erNIC)}</span></div>
-      <div class="card-row total"><span class="label">Total Tax</span><span class="value">${fmt(s.totalTax)}</span></div>
-      <div class="card-row takehome"><span class="label">Take Home</span><span class="value" style="color:var(--gold)">${fmt(s.takeHome)}</span></div>
-      <div class="eff-rate">Effective Rate: ${pct(s.effRate)}</div>
+  // --- Summary banner ---
+  const banner = document.getElementById('summaryBanner');
+  banner.innerHTML = `
+    <div class="summary-row">
+      <div class="sum-item">
+        <div class="sum-label">Salary</div>
+        <div class="sum-val">${fmt(s.salary)}</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">Dividends Paid</div>
+        <div class="sum-val">${fmt(s.dividends)}</div>
+      </div>
+      <div class="sum-item highlight-green">
+        <div class="sum-label">Total Tax Burden</div>
+        <div class="sum-val">${fmt(s.totalTax)}</div>
+      </div>
+      <div class="sum-item highlight-gold">
+        <div class="sum-label">Director Take-Home</div>
+        <div class="sum-val">${fmt(s.takeHome)}</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">Effective Rate</div>
+        <div class="sum-val">${pct(s.effRate)}</div>
+      </div>
     </div>
-  `).join('');
+    ${s.salaryExceedsProfit ? '<div class="exceed-warning" style="margin-top:12px;">⚠️ Salary + Employer NIC exceeds company profit — no dividends can be paid in this scenario.</div>' : ''}
+  `;
 
-  // Detail table
-  const cols = scenarios.map(s => s.label.replace('\n', '<br>'));
+  // --- Detailed breakdown table ---
   const rows = [
-    { type: 'header', label: 'INPUT' },
-    { label: 'Company profit before remuneration', vals: scenarios.map(s => fmt(profit)) },
-    { type: 'header', label: 'COMPANY (CORPORATE LEVEL)' },
-    { label: 'Less: Salary', vals: scenarios.map(s => s.salary ? fmt(-s.salary) : '—') },
-    { label: 'Less: Employer NIC', vals: scenarios.map(s => s.erNIC ? fmt(-s.erNIC) : '—') },
-    { label: 'Taxable Profit', vals: scenarios.map(s => fmt(s.taxableProfit)) },
-    { label: 'Corporation Tax', vals: scenarios.map(s => fmt(s.ct)) },
-    { label: 'Post-CT Profit (available for dividends)', vals: scenarios.map(s => fmt(s.postCTProfit)) },
-    { type: 'header', label: 'DIRECTOR INCOME' },
-    { label: 'Salary', vals: scenarios.map(s => fmt(s.salary)) },
-    { label: 'Dividends declared', vals: scenarios.map(s => fmt(s.dividends)) },
-    { label: 'Total director income', vals: scenarios.map(s => fmt(s.salary + s.dividends)) },
-    { type: 'header', label: 'PERSONAL TAX' },
-    { label: 'Personal Allowance', vals: scenarios.map(() => fmt(PA)) },
-    { label: 'Dividend Allowance', vals: scenarios.map(() => fmt(DIV_ALLOWANCE)) },
-    { label: 'Income Tax on Salary (20%)', vals: scenarios.map(s => fmt(s.itOnSalary)) },
-    { label: 'Dividend Tax (8.75% / 33.75%)', vals: scenarios.map(s => fmt(s.divTax)) },
-    { label: 'Employee NIC', vals: scenarios.map(s => fmt(s.eeNIC)) },
-    { label: 'Employer NIC', vals: scenarios.map(s => fmt(s.erNIC)) },
-    { type: 'total', label: 'TOTAL ALL TAXES', vals: scenarios.map(s => fmt(s.totalTax)) },
-    { type: 'eff', label: 'Effective Tax Rate', vals: scenarios.map(s => pct(s.effRate)) },
-    { type: 'takehome', label: 'Director Take-Home (after personal tax)', vals: scenarios.map(s => fmt(s.takeHome)) },
+    { type: 'header', label: 'COMPANY — CORPORATE LEVEL' },
+    { label: 'Profit before remuneration (add-back)', val: fmt(profit) },
+    { label: 'Less: Director salary', val: s.salary ? fmt(-s.salary) : '—' },
+    { label: 'Less: Employer NIC (15% above £5,000)', val: s.erNIC ? fmt(-s.erNIC) : '—' },
+    { label: 'Taxable profit', val: fmt(s.taxableProfit), bold: true },
+    { label: 'Corporation Tax', val: fmt(s.ct), bold: true },
+    { label: 'Post-CT profit available for dividends', val: fmt(s.postCTProfit) },
+    { type: 'header', label: 'DIRECTOR — INCOME' },
+    { label: 'Salary received', val: fmt(s.salary) },
+    { label: 'Dividends declared (capped at post-CT profit)', val: fmt(s.dividends) },
+    { label: 'Total director income', val: fmt(s.salary + s.dividends), bold: true },
+    { type: 'header', label: 'DIRECTOR — PERSONAL TAX' },
+    { label: 'Personal Allowance', val: fmt(s.effectivePA || PA), note: s.effectivePA < PA ? '(tapered)' : '' },
+    { label: 'Dividend Allowance', val: fmt(DIV_ALLOWANCE) },
+    { label: 'Income Tax on salary (20%)', val: fmt(s.itOnSalary) },
+    { label: 'Dividend Tax (8.75% basic / 33.75% higher / 39.35% additional)', val: fmt(s.divTax) },
+    { label: 'Employee NIC (8% up to £50,270 / 2% above)', val: fmt(s.eeNIC) },
+    { type: 'header', label: 'COMBINED TAX SUMMARY' },
+    { label: 'Corporation Tax', val: fmt(s.ct) },
+    { label: 'Income Tax (salary)', val: fmt(s.itOnSalary) },
+    { label: 'Dividend Tax', val: fmt(s.divTax) },
+    { label: 'Employee NIC', val: fmt(s.eeNIC) },
+    { label: 'Employer NIC', val: fmt(s.erNIC) },
+    { type: 'total', label: 'TOTAL ALL TAXES', val: fmt(s.totalTax) },
+    { type: 'eff',   label: 'Effective Tax Rate (on company profit)', val: pct(s.effRate) },
+    { type: 'takehome', label: 'Director Take-Home (after all personal tax & NIC)', val: fmt(s.takeHome) },
   ];
 
-  let tableHTML = `<thead><tr><th>Item</th>${cols.map((c, i) => `<th ${i === bestIdx ? 'class="best-col"' : ''}>${c}</th>`).join('')}</tr></thead><tbody>`;
-
+  let tableHTML = `<thead><tr><th>Item</th><th>Amount</th></tr></thead><tbody>`;
   rows.forEach(row => {
     if (row.type === 'header') {
-      tableHTML += `<tr class="section-header"><td colspan="${scenarios.length + 1}">${row.label}</td></tr>`;
+      tableHTML += `<tr class="section-header"><td colspan="2">${row.label}</td></tr>`;
     } else if (row.type === 'total') {
-      tableHTML += `<tr class="total-row"><td>${row.label}</td>${row.vals.map((v, i) => `<td ${i === bestIdx ? 'class="best-col"' : ''}>${v}</td>`).join('')}</tr>`;
+      tableHTML += `<tr class="total-row"><td>${row.label}</td><td>${row.val}</td></tr>`;
     } else if (row.type === 'eff') {
-      tableHTML += `<tr class="eff-row"><td>${row.label}</td>${row.vals.map((v, i) => `<td ${i === bestIdx ? 'class="best-col"' : ''}>${v}</td>`).join('')}</tr>`;
+      tableHTML += `<tr class="eff-row"><td>${row.label}</td><td>${row.val}</td></tr>`;
     } else if (row.type === 'takehome') {
-      tableHTML += `<tr class="takehome-row"><td>${row.label}</td>${row.vals.map((v, i) => `<td ${i === bestIdx ? 'class="best-col"' : ''}>${v}</td>`).join('')}</tr>`;
+      tableHTML += `<tr class="takehome-row"><td>${row.label}</td><td>${row.val}</td></tr>`;
     } else {
-      tableHTML += `<tr><td>${row.label}</td>${row.vals.map((v, i) => `<td ${i === bestIdx ? 'class="best-col"' : ''}>${v}</td>`).join('')}</tr>`;
+      tableHTML += `<tr ${row.bold ? 'style="font-weight:bold;"' : ''}><td>${row.label}${row.note ? ' <span style="color:var(--gold);font-size:0.8rem;">'+row.note+'</span>' : ''}</td><td>${row.val}</td></tr>`;
     }
   });
-
   tableHTML += '</tbody>';
   document.getElementById('detailTable').innerHTML = tableHTML;
 
@@ -923,6 +943,155 @@ function calculate() {
   _calculate();
 }
 
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const margin = 18;
+  const pageW = 210;
+  const colW = pageW - margin * 2;
+  let y = 20;
+
+  // Header
+  doc.setFillColor(45, 106, 79);
+  doc.rect(0, 0, 210, 28, 'F');
+  doc.setFillColor(181, 132, 42);
+  doc.rect(0, 28, 210, 1.5, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Director Remuneration Tax Calculator', margin, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Tax Year 2025-26  |  Calculator for guidance only', margin, 21);
+  doc.setTextColor(40, 40, 40);
+  y = 38;
+
+  // Inputs summary
+  const profitAfter = document.getElementById('profitAfterSalary').value;
+  const salaryCharged = document.getElementById('salaryCharged').value || '0';
+  const profitBefore = document.getElementById('profit').value;
+  const cSalary = document.getElementById('customSalary').value || '0';
+  const cDiv    = document.getElementById('customDiv').value || '0';
+  const assocEl = document.getElementById('associated');
+  const eaEl    = document.getElementById('empAllowance');
+  const otherInc = document.getElementById('otherIncome').value || '0';
+
+  doc.setFillColor(216, 243, 220);
+  doc.rect(margin, y, colW, 26, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(45, 106, 79);
+  doc.text('INPUTS', margin + 4, y + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(40, 40, 40);
+  doc.setFontSize(8.5);
+  doc.text(`Net profit per accounts: £${parseFloat(profitAfter).toLocaleString('en-GB',{minimumFractionDigits:2})}`, margin+4, y+12);
+  doc.text(`Salary charged in accounts: £${parseFloat(salaryCharged).toLocaleString('en-GB',{minimumFractionDigits:2})}`, margin+4, y+17);
+  doc.text(`Profit before remuneration (add-back): £${parseFloat(profitBefore).toLocaleString('en-GB',{minimumFractionDigits:2})}`, margin+4, y+22);
+  doc.text(`Custom salary: £${parseFloat(cSalary).toLocaleString('en-GB',{minimumFractionDigits:2})}    Custom dividends: £${parseFloat(cDiv).toLocaleString('en-GB',{minimumFractionDigits:2})}`, margin+90, y+12);
+  doc.text(`Associated companies: ${assocEl.options[assocEl.selectedIndex].text.split(' ')[0]}`, margin+90, y+17);
+  doc.text(`Other income: £${parseFloat(otherInc).toLocaleString('en-GB',{minimumFractionDigits:2})}`, margin+90, y+22);
+  y += 32;
+
+  // Read table rows from DOM
+  const table = document.getElementById('detailTable');
+  const rows = table.querySelectorAll('tr');
+  const lineH = 7;
+  const col1W = colW * 0.72;
+  const col2W = colW * 0.28;
+
+  // Table header
+  doc.setFillColor(45, 106, 79);
+  doc.rect(margin, y, colW, lineH, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.text('Item', margin+3, y+5);
+  doc.text('Amount', margin+col1W+col2W-3, y+5, {align:'right'});
+  y += lineH;
+  doc.setTextColor(40,40,40);
+
+  rows.forEach((row, ri) => {
+    if (ri === 0) return; // skip thead
+    if (y > 270) { doc.addPage(); y = 20; }
+    const cells = row.querySelectorAll('td');
+    if (!cells.length) return;
+    const cls = row.className;
+    const label = cells[0] ? cells[0].innerText : '';
+    const val   = cells[1] ? cells[1].innerText : '';
+
+    if (cls.includes('section-header')) {
+      doc.setFillColor(216, 243, 220);
+      doc.rect(margin, y, colW, lineH, 'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(45,106,79);
+      doc.text(label, margin+3, y+5);
+      y += lineH;
+      doc.setTextColor(40,40,40);
+    } else if (cls.includes('total-row')) {
+      doc.setFillColor(26,26,46);
+      doc.rect(margin, y, colW, lineH+1, 'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(9);
+      doc.setTextColor(255,255,255);
+      doc.text(label, margin+3, y+5.5);
+      doc.text(val, margin+col1W+col2W-3, y+5.5, {align:'right'});
+      y += lineH+1;
+      doc.setTextColor(40,40,40);
+    } else if (cls.includes('eff-row')) {
+      doc.setFillColor(45,106,79);
+      doc.rect(margin, y, colW, lineH, 'F');
+      doc.setFont('helvetica','italic');
+      doc.setFontSize(8.5);
+      doc.setTextColor(255,255,255);
+      doc.text(label, margin+3, y+5);
+      doc.text(val, margin+col1W+col2W-3, y+5, {align:'right'});
+      y += lineH;
+      doc.setTextColor(40,40,40);
+    } else if (cls.includes('takehome-row')) {
+      doc.setFillColor(181,132,42);
+      doc.rect(margin, y, colW, lineH, 'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(255,255,255);
+      doc.text(label, margin+3, y+5);
+      doc.text(val, margin+col1W+col2W-3, y+5, {align:'right'});
+      y += lineH;
+      doc.setTextColor(40,40,40);
+    } else {
+      const isBold = row.style.fontWeight === 'bold';
+      const bg = (ri % 2 === 0) ? [248,250,249] : [255,255,255];
+      doc.setFillColor(...bg);
+      doc.rect(margin, y, colW, lineH, 'F');
+      doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+      doc.setFontSize(8.5);
+      doc.text(label.substring(0, 70), margin+3, y+5);
+      doc.text(val, margin+col1W+col2W-3, y+5, {align:'right'});
+      y += lineH;
+    }
+  });
+
+  y += 6;
+  if (y > 265) { doc.addPage(); y = 20; }
+
+  // Footer note
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(7.5);
+  doc.setTextColor(120,120,120);
+  doc.text('This calculation is for illustrative purposes only. Rates correct for 2025-26. Always confirm with your accountant.', margin, y, {maxWidth: colW});
+  y += 7;
+  const today = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'});
+  doc.text(`Generated: ${today}`, margin, y);
+
+  // Page border
+  doc.setDrawColor(45,106,79);
+  doc.setLineWidth(0.5);
+  doc.rect(5, 5, 200, 287);
+
+  doc.save('Director-Tax-Calculation-2025-26.pdf');
+}
+
 function resetForm() {
   document.getElementById('profitAfterSalary').value = '';
   document.getElementById('salaryCharged').value = '';
@@ -933,13 +1102,13 @@ function resetForm() {
   document.getElementById('associated').selectedIndex = 0;
   document.getElementById('empAllowance').selectedIndex = 0;
   document.getElementById('profitDisplay').style.display = 'none';
+  document.getElementById('summaryBanner').innerHTML = '';
+  document.getElementById('detailTable').innerHTML = '';
   document.getElementById('results').classList.remove('visible');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function printPDF() {
-  window.print();
-}
+
 
 
 </script>
