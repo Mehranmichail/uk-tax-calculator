@@ -147,8 +147,15 @@
     padding-left: 28px;
   }
 
-  .calc-btn {
+  .btn-group {
     margin-top: 22px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .calc-btn {
     background: var(--green);
     color: white;
     border: none;
@@ -163,6 +170,54 @@
 
   .calc-btn:hover { background: var(--green-light); transform: translateY(-1px); }
   .calc-btn:active { transform: translateY(0); }
+
+  .reset-btn {
+    background: white;
+    color: var(--green);
+    border: 2px solid var(--green);
+    padding: 11px 24px;
+    font-size: 1rem;
+    font-family: Georgia, serif;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-style: italic;
+  }
+
+  .reset-btn:hover { background: var(--green-pale); }
+
+  .print-btn {
+    background: var(--gold);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-family: Georgia, serif;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-style: italic;
+  }
+
+  .print-btn:hover { background: #9a6e22; transform: translateY(-1px); }
+
+  @media print {
+    header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .btn-group, .print-btn, .reset-btn, .calc-btn { display: none !important; }
+    .input-section { box-shadow: none; border: 1px solid #ccc; }
+    .results-section { display: block !important; }
+    .winner-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .scenario-card.best { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tbody tr.total-row, tbody tr.eff-row, tbody tr.takehome-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tbody tr.section-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .scenarios-grid { grid-template-columns: repeat(3, 1fr); }
+    footer { display: block; }
+    body { font-size: 11px; }
+    .container { padding: 10px; }
+    table { font-size: 10px; min-width: unset; }
+    .detail-section { overflow: visible; }
+  }
 
   /* Results */
   .results-section {
@@ -467,14 +522,41 @@
 
   <div class="input-section">
     <h2>Company &amp; Director Details</h2>
-    <div class="input-grid">
+
+    <!-- Step 1: Profit per accounts -->
+    <div style="margin-bottom:6px;">
+      <span style="font-family:'Playfair Display',Georgia,serif; font-size:0.82rem; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:0.07em;">Step 1 — Profit per Accounts</span>
+    </div>
+    <div class="input-grid" style="margin-bottom:0;">
       <div class="input-group">
-        <label>Company profit before remuneration (£)</label>
+        <label>Net profit per accounts <em>(after salary already charged)</em></label>
         <div class="prefix-wrap">
           <span>£</span>
-          <input type="number" id="profit" placeholder="e.g. 54360" min="0" max="10000000" step="100">
+          <input type="number" id="profitAfterSalary" placeholder="e.g. 42000" min="0" max="10000000" step="100" oninput="recalcProfit()">
         </div>
       </div>
+      <div class="input-group">
+        <label>Director salary already charged in accounts</label>
+        <div class="prefix-wrap">
+          <span>£</span>
+          <input type="number" id="salaryCharged" placeholder="e.g. 12570" min="0" step="100" oninput="recalcProfit()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Derived profit before remuneration -->
+    <div id="profitDisplay" style="display:none; margin-top:14px; background:var(--green-pale); border-left:4px solid var(--green); border-radius:0 8px 8px 0; padding:10px 16px; font-size:0.9rem;">
+      <span style="color:var(--text-light); font-style:italic;">Profit before remuneration (add-back): </span>
+      <strong id="profitBeforeLabel" style="color:var(--green); font-size:1rem;"></strong>
+    </div>
+
+    <!-- Hidden field used by calculator -->
+    <input type="hidden" id="profit">
+
+    <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid var(--green-pale);">
+      <span style="font-family:'Playfair Display',Georgia,serif; font-size:0.82rem; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:0.07em;">Step 2 — Other Settings</span>
+    </div>
+    <div class="input-grid" style="margin-top:14px;">
       <div class="input-group">
         <label>Number of associated companies</label>
         <select id="associated">
@@ -499,9 +581,11 @@
         </div>
       </div>
     </div>
+
     <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid var(--green-pale);">
-      <p style="font-family: Playfair Display, Georgia, serif; font-size: 1.05rem; color: var(--green); font-weight: 600; margin-bottom: 14px;">Custom Scenario — Enter Your Own Figures</p>
-      <div class="input-grid">
+      <span style="font-family:'Playfair Display',Georgia,serif; font-size:0.82rem; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:0.07em;">Step 3 — Custom Scenario (Optional)</span>
+      <p style="font-size:0.82rem; color:var(--text-light); margin-top:6px; font-style:italic;">Enter any salary &amp; dividend combination to see its tax impact alongside the standard scenarios.</p>
+      <div class="input-grid" style="margin-top:12px;">
         <div class="input-group">
           <label>Custom salary (£)</label>
           <div class="prefix-wrap">
@@ -517,9 +601,12 @@
           </div>
         </div>
       </div>
-      <p style="font-size:0.82rem; color:var(--text-light); margin-top:10px; font-style:italic;">Leave blank to exclude the custom scenario. Dividends are capped at post-CT available profit automatically.</p>
     </div>
-    <button class="calc-btn" onclick="calculate()">Calculate All Scenarios →</button>
+
+    <div class="btn-group">
+      <button class="calc-btn" onclick="calculate()">Calculate All Scenarios →</button>
+      <button class="reset-btn" onclick="resetForm()">↺ Reset</button>
+    </div>
   </div>
 
   <div class="results-section" id="results">
@@ -558,6 +645,10 @@
 
     <div class="warning-box">
       ⚠️ <strong>Professional advice note:</strong> This calculator provides illustrative figures only. Individual circumstances vary. Always confirm with your accountant before implementing a remuneration strategy. Rates correct for 2025-26 tax year.
+    </div>
+
+    <div style="text-align:center; margin-bottom: 8px;">
+      <button class="print-btn" onclick="printPDF()">🖨 Print / Save as PDF</button>
     </div>
 
   </div>
@@ -613,28 +704,44 @@ function getEffectivePA(totalIncome) {
 }
 
 function calcIncomeTax(salary, dividends, otherIncome) {
+  // HMRC-correct approach: bands based on TOTAL INCOME thresholds
+  // Dividends are the top slice; allowance sits in whichever band divs start in
+  const HR_THRESHOLD = 50270;       // basic rate limit (PA + basic band)
+  const ADD_THRESHOLD = 125140;     // additional rate threshold
+
   const totalIncome = salary + dividends + otherIncome;
   const effectivePA = getEffectivePA(totalIncome);
+  const nonDivIncome = salary + otherIncome;
 
-  const taxableNonDiv = Math.max(0, salary + otherIncome - effectivePA);
+  // --- Salary / non-dividend income tax ---
+  const taxableNonDiv = Math.max(0, nonDivIncome - effectivePA);
   let itOnSalary = 0;
   if (taxableNonDiv > 0) {
-    const inBasic = Math.min(taxableNonDiv, BASIC_BAND);
-    const inHigher = Math.max(0, Math.min(taxableNonDiv - BASIC_BAND, 125140 - BASIC_BAND));
-    const inAdditional = Math.max(0, taxableNonDiv - 125140);
+    const inBasic    = Math.min(taxableNonDiv, HR_THRESHOLD - effectivePA);
+    const inHigher   = Math.max(0, Math.min(taxableNonDiv - (HR_THRESHOLD - effectivePA), ADD_THRESHOLD - HR_THRESHOLD));
+    const inAdditional = Math.max(0, taxableNonDiv - (ADD_THRESHOLD - effectivePA));
     itOnSalary = inBasic * IT_BASIC + inHigher * IT_HIGHER + inAdditional * IT_ADDITIONAL;
   }
 
-  // Dividends sit on top of salary in the tax bands
-  const salaryUsedBand = Math.max(0, salary + otherIncome - effectivePA);
-  const remainingBasic = Math.max(0, BASIC_BAND - salaryUsedBand);
-  const taxableDivs = Math.max(0, dividends - DIV_ALLOWANCE);
+  // --- Dividend tax ---
+  // Dividends sit on top of non-div income in total income terms
+  const divStart = nonDivIncome;
+  const divEnd   = nonDivIncome + dividends;
+  let remainingAllowance = DIV_ALLOWANCE;
 
-  const divInBasic = Math.min(taxableDivs, remainingBasic);
-  const divInHigher = Math.max(0, Math.min(taxableDivs - remainingBasic, 125140 - BASIC_BAND - Math.max(0, salaryUsedBand - BASIC_BAND)));
-  const divInAdditional = Math.max(0, taxableDivs - remainingBasic - Math.max(0, 125140 - BASIC_BAND - Math.max(0, salaryUsedBand - BASIC_BAND)));
+  // Gross dividends in each total-income band
+  const divInBasicGross  = Math.max(0, Math.min(divEnd, HR_THRESHOLD)  - Math.max(divStart, effectivePA));
+  const divInHigherGross = Math.max(0, Math.min(divEnd, ADD_THRESHOLD) - Math.max(divStart, HR_THRESHOLD));
+  const divInAddGross    = Math.max(0, divEnd - Math.max(divStart, ADD_THRESHOLD));
 
-  const divTax = divInBasic * DIV_BASIC + Math.max(0,divInHigher) * DIV_HIGHER + Math.max(0,divInAdditional) * DIV_ADDITIONAL;
+  // Apply allowance from lowest band upward (HMRC: allowance uses lowest applicable rate)
+  const basicAllow  = Math.min(remainingAllowance, divInBasicGross);  remainingAllowance -= basicAllow;
+  const higherAllow = Math.min(remainingAllowance, divInHigherGross); remainingAllowance -= higherAllow;
+  const addAllow    = Math.min(remainingAllowance, divInAddGross);
+
+  const divTax = (divInBasicGross  - basicAllow)  * DIV_BASIC
+               + (divInHigherGross - higherAllow) * DIV_HIGHER
+               + (divInAddGross    - addAllow)    * DIV_ADDITIONAL;
 
   return { itOnSalary, divTax, totalIT: itOnSalary + divTax, effectivePA };
 }
@@ -791,13 +898,47 @@ function _calculate() {
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function recalcProfit() {
+  const pas = parseFloat(document.getElementById('profitAfterSalary').value);
+  const sc = parseFloat(document.getElementById('salaryCharged').value) || 0;
+  const display = document.getElementById('profitDisplay');
+  const label = document.getElementById('profitBeforeLabel');
+  if (!isNaN(pas)) {
+    const total = pas + sc;
+    document.getElementById('profit').value = total;
+    label.textContent = '£' + total.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    display.style.display = 'block';
+  } else {
+    document.getElementById('profit').value = '';
+    display.style.display = 'none';
+  }
+}
+
 function calculate() {
-  const profitInput = document.getElementById('profit').value;
-  if (!profitInput || profitInput === '') {
-    alert('Please enter the company profit before remuneration.');
+  const pas = document.getElementById('profitAfterSalary').value;
+  if (!pas || pas === '') {
+    alert('Please enter the net profit per accounts.');
     return;
   }
   _calculate();
+}
+
+function resetForm() {
+  document.getElementById('profitAfterSalary').value = '';
+  document.getElementById('salaryCharged').value = '';
+  document.getElementById('profit').value = '';
+  document.getElementById('otherIncome').value = '';
+  document.getElementById('customSalary').value = '';
+  document.getElementById('customDiv').value = '';
+  document.getElementById('associated').selectedIndex = 0;
+  document.getElementById('empAllowance').selectedIndex = 0;
+  document.getElementById('profitDisplay').style.display = 'none';
+  document.getElementById('results').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function printPDF() {
+  window.print();
 }
 
 
