@@ -282,6 +282,24 @@
 
   .scenario-card.best .eff-rate { background: var(--green); }
 
+  .scenario-card.exceeded {
+    border-color: #c0392b;
+    background: linear-gradient(to bottom, #fff5f5, white);
+    opacity: 0.85;
+  }
+
+  .exceed-warning {
+    background: #fdecea;
+    border: 1px solid #e74c3c;
+    color: #c0392b;
+    font-size: 0.76rem;
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-style: italic;
+    line-height: 1.4;
+  }
+
   /* Detailed table */
   .detail-section {
     background: white;
@@ -481,6 +499,26 @@
         </div>
       </div>
     </div>
+    <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid var(--green-pale);">
+      <p style="font-family: Playfair Display, Georgia, serif; font-size: 1.05rem; color: var(--green); font-weight: 600; margin-bottom: 14px;">Custom Scenario — Enter Your Own Figures</p>
+      <div class="input-grid">
+        <div class="input-group">
+          <label>Custom salary (£)</label>
+          <div class="prefix-wrap">
+            <span>£</span>
+            <input type="number" id="customSalary" placeholder="e.g. 9100" min="0" step="100">
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Custom dividends (£)</label>
+          <div class="prefix-wrap">
+            <span>£</span>
+            <input type="number" id="customDiv" placeholder="e.g. 30000" min="0" step="100">
+          </div>
+        </div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-light); margin-top:10px; font-style:italic;">Leave blank to exclude the custom scenario. Dividends are capped at post-CT available profit automatically.</p>
+    </div>
     <button class="calc-btn" onclick="calculate()">Calculate All Scenarios →</button>
   </div>
 
@@ -512,6 +550,8 @@
         <li>Marginal relief fraction: 3/200. Formula: 25% × profit − (3/200 × (UL − profit) × profit/augmented profits)</li>
         <li>Dividends limited to post-CT retained profits in each scenario</li>
         <li>Director is assumed to have no other income unless entered above</li>
+        <li>Personal Allowance tapering applied for total income over £100,000 (£1 reduction per £2 over £100k, fully withdrawn at £125,140)</li>
+        <li>⚠️ If salary + employer NIC exceeds company profit, the scenario is flagged as unaffordable</li>
         <li>Rates announced to rise from 6 April 2026 — basic rate dividend tax increases to 10.75%</li>
       </ul>
     </div>
@@ -565,9 +605,18 @@ function calcCT(profit, associated) {
   return mainCT - marginalRelief;
 }
 
+function getEffectivePA(totalIncome) {
+  // PA tapers at £1 per £2 over £100,000, fully withdrawn at £125,140
+  if (totalIncome <= 100000) return PA;
+  if (totalIncome >= 125140) return 0;
+  return PA - Math.floor((totalIncome - 100000) / 2);
+}
+
 function calcIncomeTax(salary, dividends, otherIncome) {
   const totalIncome = salary + dividends + otherIncome;
-  const taxableNonDiv = Math.max(0, salary + otherIncome - PA);
+  const effectivePA = getEffectivePA(totalIncome);
+
+  const taxableNonDiv = Math.max(0, salary + otherIncome - effectivePA);
   let itOnSalary = 0;
   if (taxableNonDiv > 0) {
     const inBasic = Math.min(taxableNonDiv, BASIC_BAND);
@@ -576,19 +625,18 @@ function calcIncomeTax(salary, dividends, otherIncome) {
     itOnSalary = inBasic * IT_BASIC + inHigher * IT_HIGHER + inAdditional * IT_ADDITIONAL;
   }
 
-  // Dividends sit on top
-  const salaryUsedBand = Math.max(0, salary + otherIncome - PA);
+  // Dividends sit on top of salary in the tax bands
+  const salaryUsedBand = Math.max(0, salary + otherIncome - effectivePA);
   const remainingBasic = Math.max(0, BASIC_BAND - salaryUsedBand);
   const taxableDivs = Math.max(0, dividends - DIV_ALLOWANCE);
-  
-  let divTax = 0;
-  const divInBasic = Math.min(taxableDivs, remainingBasic);
-  const divInHigher = Math.min(Math.max(0, taxableDivs - remainingBasic), 125140 - BASIC_BAND - Math.max(0, salaryUsedBand - BASIC_BAND));
-  const divInAdditional = Math.max(0, taxableDivs - remainingBasic - Math.max(0, 125140 - BASIC_BAND - Math.max(0, salaryUsedBand - BASIC_BAND)));
-  
-  divTax = divInBasic * DIV_BASIC + Math.max(0,divInHigher) * DIV_HIGHER + Math.max(0,divInAdditional) * DIV_ADDITIONAL;
 
-  return { itOnSalary, divTax, totalIT: itOnSalary + divTax };
+  const divInBasic = Math.min(taxableDivs, remainingBasic);
+  const divInHigher = Math.max(0, Math.min(taxableDivs - remainingBasic, 125140 - BASIC_BAND - Math.max(0, salaryUsedBand - BASIC_BAND)));
+  const divInAdditional = Math.max(0, taxableDivs - remainingBasic - Math.max(0, 125140 - BASIC_BAND - Math.max(0, salaryUsedBand - BASIC_BAND)));
+
+  const divTax = divInBasic * DIV_BASIC + Math.max(0,divInHigher) * DIV_HIGHER + Math.max(0,divInAdditional) * DIV_ADDITIONAL;
+
+  return { itOnSalary, divTax, totalIT: itOnSalary + divTax, effectivePA };
 }
 
 function calcEmployeeNIC(salary) {
@@ -606,7 +654,9 @@ function calcEmployerNIC(salary, empAllowance) {
 
 function runScenario(label, salary, dividendRequest, profit, associated, empAllowance, otherIncome) {
   const erNIC = calcEmployerNIC(salary, empAllowance);
-  const taxableProfit = Math.max(0, profit - salary - erNIC);
+  const rawTaxableProfit = profit - salary - erNIC;
+  const salaryExceedsProfit = rawTaxableProfit < 0;
+  const taxableProfit = Math.max(0, rawTaxableProfit);
   const ct = calcCT(taxableProfit, associated);
   const postCTProfit = Math.max(0, taxableProfit - ct);
 
@@ -614,7 +664,7 @@ function runScenario(label, salary, dividendRequest, profit, associated, empAllo
   const dividends = Math.min(dividendRequest, postCTProfit);
 
   const eeNIC = calcEmployeeNIC(salary);
-  const { itOnSalary, divTax, totalIT } = calcIncomeTax(salary, dividends, otherIncome);
+  const { itOnSalary, divTax, totalIT, effectivePA } = calcIncomeTax(salary, dividends, otherIncome);
 
   const totalTax = ct + itOnSalary + divTax + eeNIC + erNIC;
   const takeHome = salary + dividends - itOnSalary - divTax - eeNIC;
@@ -624,7 +674,8 @@ function runScenario(label, salary, dividendRequest, profit, associated, empAllo
     label, salary, dividends, erNIC, eeNIC,
     taxableProfit, ct, postCTProfit,
     itOnSalary, divTax, totalIT,
-    totalTax, takeHome, effRate
+    totalTax, takeHome, effRate,
+    salaryExceedsProfit, effectivePA
   };
 }
 
@@ -643,12 +694,24 @@ function _calculate() {
   const empAllowance = parseFloat(document.getElementById('empAllowance').value) || 0;
   const otherIncome = parseFloat(document.getElementById('otherIncome').value) || 0;
 
-  const scenarios = [
+  const customSalaryVal = document.getElementById('customSalary').value;
+  const customDivVal = document.getElementById('customDiv').value;
+  const hasCustom = customSalaryVal !== '' || customDivVal !== '';
+
+  const baseScenarios = [
     runScenario('Salary Only\n(£50,270)', 50270, 0, profit, associated, empAllowance, otherIncome),
     runScenario('£12,570 Salary\n+ Dividends', 12570, profit, profit, associated, empAllowance, otherIncome),
-    runScenario('£5,000 Salary\n+ Dividends', 5000, profit, profit, associated, empAllowance, otherIncome),
     runScenario('Dividends Only', 0, profit, profit, associated, empAllowance, otherIncome),
   ];
+
+  const scenarios = [...baseScenarios];
+
+  if (hasCustom) {
+    const cSalary = parseFloat(customSalaryVal) || 0;
+    const cDiv = parseFloat(customDivVal) || profit;
+    const cLabel = `Custom\n(£${cSalary.toLocaleString('en-GB')} sal + £${cDiv.toLocaleString('en-GB')} div)`;
+    scenarios.push(runScenario(cLabel, cSalary, cDiv, profit, associated, empAllowance, otherIncome));
+  }
 
   // Find best (lowest total tax)
   let bestIdx = 0;
@@ -662,8 +725,9 @@ function _calculate() {
   // Scenario cards
   const grid = document.getElementById('scenariosGrid');
   grid.innerHTML = scenarios.map((s, i) => `
-    <div class="scenario-card ${i === bestIdx ? 'best' : ''}">
+    <div class="scenario-card ${i === bestIdx ? 'best' : ''} ${s.salaryExceedsProfit ? 'exceeded' : ''}">
       <h3>${s.label.replace('\n', '<br>')}</h3>
+      ${s.salaryExceedsProfit ? '<div class="exceed-warning">⚠️ Salary + Employer NIC exceeds company profit</div>' : ''}
       <div class="card-row"><span class="label">Salary</span><span class="value">${fmt(s.salary)}</span></div>
       <div class="card-row"><span class="label">Dividends</span><span class="value">${fmt(s.dividends)}</span></div>
       <div class="card-row"><span class="label">Corporation Tax</span><span class="value">${fmt(s.ct)}</span></div>
